@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MagnyMap - Local services speak in your language</title>
+
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/3.7.8/firebase-app.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/3.7.8/firebase-auth.js"></script>
+    <script defer src="/__/firebase/3.7.8/firebase-database.js"></script>
+    <script defer src="/__/firebase/3.7.8/firebase-messaging.js"></script>
+    <script defer src="/__/firebase/3.7.8/firebase-storage.js"></script>
+    <!-- initialize the SDK after all desired features are loaded -->
+    <script defer src="/__/firebase/init.js"></script>
+
+    <script src="https://cdn.firebase.com/libs/geofire/4.1.2/geofire.min.js"></script>
+
+    <!-- Angular Material style sheet -->
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
+
+    <!-- Angular Material requires Angular.js Libraries -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-animate.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-aria.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-messages.min.js"></script>
+
+    <!-- Angular Material Library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js"></script>
+
+
+    <script src="/js/autoComplete.js"></script>
+    <script src="/js/search.js"></script>
+
+    <script>
+
+
+    </script>
+
+</head>
+<body ng-app="mapApp" ng-cloak ng-controller="MapController as ctrl" layout="column">
+
+
+<md-toolbar layout="row">
+
+    <md-button class="md-raised md-primary" ng-click="showAddDialog($event)">
+        <md-tooltip ng-if="$mdMedia('gt-sm')">
+            Register your business on our map
+        </md-tooltip>
+        <md-icon md-svg-icon="/img/add.svg"></md-icon>
+        New Service
+    </md-button>
+
+    <md-button class="md-raised md-primary" ng-click="toggleRightSideNav()">
+        <md-tooltip ng-if="$mdMedia('gt-sm')">
+            Your added services
+        </md-tooltip>
+
+        Your Services
+    </md-button>
+
+</md-toolbar>
+
+<div flex layout="row">
+
+    <md-sidenav md-is-locked-open="$mdMedia('gt-sm')" md-component-id="searchSide">
+        <md-toolbar class="md-theme-light">
+            <div class="md-toolbar-tools">
+                <h2>Find services</h2>
+                <span flex></span>
+                <md-button hide-gt-sm class="md-icon-button" ng-click="closeSearchSide()">
+                    <md-icon md-svg-src="/img/close.svg"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-card>
+
+            <md-card-title>
+                <md-card-title-text>
+
+                    <span class="md-subhead">Search for people, businesses, services, etc.</span>
+                </md-card-title-text>
+
+            </md-card-title>
+            <md-card-content>
+
+
+                <md-input-container class="md-block" flex-gt-sm="">
+                    <label>Category</label>
+                    <md-select ng-model="type">
+                        <md-option ng-repeat="t in staticData.categories" ng-value="t.code">{{t.name}}</md-option>
+
+                    </md-select>
+                </md-input-container>
+
+                <div layout-gt-sm="row">
+
+
+                    <md-input-container class="md-block" flex-gt-sm="">
+
+                        <input id="address-auto-search" ng-model="address"/>
+                    </md-input-container>
+                    <md-input-container class="md-block" flex-gt-sm="">
+                        <label>Distance</label>
+                        <md-select ng-model="distance">
+                            <md-option value="5km">5 KM</md-option>
+                            <md-option value="10km">10 KM</md-option>
+                            <md-option value="30km">30 KM</md-option>
+                        </md-select>
+                    </md-input-container>
+                </div>
+
+                <md-input-container class="md-block" flex-gt-sm="">
+                    <label>Name of person, place, etc.</label>
+
+                    <input ng-model="name" type="text">
+                </md-input-container>
+
+                <div layout-gt-sm="row" ng-if="type ==='doctor'">
+
+                    <md-input-container class="md-block" flex-gt-sm="">
+                        <label>Gender</label>
+                        <md-select ng-model="gender">
+                            <md-option value=""></md-option>
+                            <md-option value="female">Female</md-option>
+                            <md-option value="male">Male</md-option>
+                        </md-select>
+                    </md-input-container>
+
+                    <md-input-container class="md-block" flex-gt-sm="">
+                        <label>Occupation (if applicable)</label>
+                        <input ng-model="occupation" placeholder="E.g. dentist">
+                    </md-input-container>
+                    <md-input-container class="md-block" flex-gt-sm="">
+                        <label>Clinic name</label>
+                        <input ng-model="clinic">
+                    </md-input-container>
+                </div>
+
+
+            </md-card-content>
+            <md-card-actions layout="row" layout-align="end center">
+                <md-button class="md-raised md-primary" ng-click="searchServices()">Search</md-button>
+            </md-card-actions>
+        </md-card>
+
+    </md-sidenav>
+    <md-sidenav class="md-sidenav-right md-whiteframe-4dp" md-component-id="resultSide">
+
+        <md-toolbar class="md-theme-light">
+            <div class="md-toolbar-tools">
+                <h2>Your Services</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="closeResult()">
+                    <md-icon md-svg-src="/img/close.svg"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-content layout-padding>
+            <md-list>
+
+                <md-list-item class="md-3-line" ng-repeat="el in searchResult">
+
+
+                    <div class="md-list-item-text">
+                        <h3>
+                            <span>{{ el.name }}</span>
+
+                            <md-button ng-click="showServiceDetails($event)">
+                                <md-icon md-svg-icon="/img/irn/info5.svg"></md-icon>
+                            </md-button>
+                        </h3>
+                        <h4>{{ el.detail.occupation }} ({{ el.detail.gender }})</h4>
+                        <h4>{{ el.location.clinic_name }}</h4>
+                        <h4>{{ el.location.phone }}</h4>
+                        <p>
+                            {{ el.location.address }}<br/>
+                            <md-button href="{{ el.location.location_url }}"
+                                       title="View on Google Maps"
+                                       target="_blank"
+                                       class="md-icon-button launch">
+                                <md-icon md-svg-icon="/img/google_map.svg"></md-icon>
+                            </md-button>
+                            <md-button href="{{ el.location.location_url }}"
+                                       title="View on Google Maps"
+                                       target="_blank"
+                                       class="md-icon-button launch">
+                                <md-icon md-svg-icon="/img/review_2.svg"></md-icon>
+                            </md-button>
+                            <md-icon md-svg-icon="/img/review/review_3.svg"></md-icon>
+                        </p>
+
+                    </div>
+                    <md-divider ng-if="!$last"></md-divider>
+                </md-list-item>
+
+            </md-list>
+        </md-content>
+
+    </md-sidenav>
+
+
+    <div flex layout="row">
+
+        <md-content flex style="background-color: #777777">
+            <md-button hide-gt-sm
+                       ng-click="showSearchTab()"
+                       class="md-fab md-primary" aria-label="Search"
+                       style="position: absolute;top: 5px">
+
+                <md-icon md-svg-src="/img/magnifier.svg"></md-icon>
+            </md-button>
+
+            <md-button hide-gt-sm
+                       ng-click="showResultTab()"
+                       ng-if="searchResult && searchResult.length > 0"
+                       class="md-fab md-warn" aria-label="Result"
+                       style="position: absolute;top: 70px">
+
+                <md-icon md-svg-src="/img/menu.svg"></md-icon>
+            </md-button>
+
+        </md-content>
+    </div>
+
+
+</div>
+
+<script type="text/ng-template" id="addNewService.tmpl.html">
+
+    <md-dialog >
+        <form>
+            <md-toolbar>
+                <div class="md-toolbar-tools">
+                    <h2>New Service/Business</h2>
+
+                </div>
+            </md-toolbar>
+
+            <md-dialog-content>
+                <md-card>
+
+                    <md-card-title>
+                        <md-card-title-text>
+                            <span class="md-subhead">Add your business, service, etc. on the map.</span>
+                        </md-card-title-text>
+
+                    </md-card-title>
+                    <md-card-content>
+
+
+                        <md-input-container class="md-block" flex-gt-sm="">
+
+                            <md-select ng-model="type" placeholder="Category">
+                                <md-option ng-repeat="t in staticData.categories" ng-value="t.code">{{t.name}}
+                                </md-option>
+
+                            </md-select>
+                        </md-input-container>
+
+                        <md-input-container class="md-block" flex-gt-sm="">
+                            <input ng-model="biz.name" placeholder="Name of your business">
+                        </md-input-container>
+
+                        <md-input-container class="md-block" flex-gt-sm="">
+                            <input id="biz-location" ng-model="loc"/>
+                        </md-input-container>
+
+
+                        <md-input-container class="md-block" flex-gt-sm="">
+                            <input ng-model="biz.phone" placeholder="Phone or Mobile">
+                        </md-input-container>
+
+                        <md-input-container class="md-block" flex-gt-sm="">
+                            <input ng-model="biz.website" placeholder="Web site">
+                        </md-input-container>
+
+                        <md-input-container class="md-block" flex-gt-sm="">
+                            <input ng-model="biz.email" placeholder="Email">
+                        </md-input-container>
+
+                        <div layout-gt-sm="row">
+
+                            <md-input-container class="md-block" flex-gt-sm="">
+                                <label>Gender</label>
+                                <md-select ng-model="gender">
+                                    <md-option value=""></md-option>
+                                    <md-option value="female">Female</md-option>
+                                    <md-option value="male">Male</md-option>
+                                </md-select>
+                            </md-input-container>
+
+                            <md-input-container class="md-block" flex-gt-sm="">
+                                <label>Occupation (if applicable)</label>
+                                <input ng-model="biz.occupation" placeholder="E.g. dentist">
+                            </md-input-container>
+                        </div>
+
+
+                        <md-input-container class="md-block" flex-gt-sm="">
+                            <input ng-model="biz.description" placeholder="Description">
+                        </md-input-container>
+
+
+                    </md-card-content>
+
+                </md-card>
+            </md-dialog-content>
+
+
+            <md-dialog-actions layout="row">
+
+                <span flex></span>
+                <md-button class="md-accent" ng-click="close()">
+                    Cancel
+                </md-button>
+                <md-button class="md-raised md-primary">
+                    Save
+                </md-button>
+            </md-dialog-actions>
+        </form>
+    </md-dialog>
+</script>
+<script type="text/ng-template" id="serviceDetails.tmpl.html">
+
+    <md-dialog>
+        <form>
+            <md-toolbar>
+                <div class="md-toolbar-tools">
+                    <h2>Details</h2>
+                    <span flex></span>
+                    <md-button class="md-icon-button" ng-click="close()">
+                        <md-icon md-svg-src="/img/close.svg"></md-icon>
+                    </md-button>
+                </div>
+            </md-toolbar>
+            <md-dialog-content>
+                <md-card>
+
+                    <md-card-content>
+
+                        <h3>Peter Jackson
+
+                        </h3>
+                        <h5>Dentist (female)</h5>
+                        <span>Moonee Pond Medical Clinic</span>
+                        <h5>0432948567</h5>
+                        <h5>http://myweb.com</h5>
+                        <h5>peter@myweb.com</h5>
+                        <p>12 St Kilda Rd, St Kilda VIC 3182</p>
+                        <p>
+                            Doctor Peter Jackson earned his degree in Australia and
+                            started working in 1998.
+                        </p>
+                    </md-card-content>
+
+                </md-card>
+
+                <md-card>
+                    <md-card-header>
+
+                        <md-card-header-text>
+                            <span class="md-title">Reviews</span>
+
+                        </md-card-header-text>
+                    </md-card-header>
+                    <md-card-content>
+                        <md-list>
+
+                            <md-list-item class="md-3-line">
+
+
+                                <div class="md-list-item-text">
+                                    <h3>
+                                        <span>User 1</span>
+                                        <span> - Bad</span>
+
+                                    </h3>
+
+                                    <p>I had a terrible experience there, stay away!</p>
+
+                                    <h6>12 Aug 2012</h6>
+
+                                </div>
+                                <md-divider ng-if="!$last"></md-divider>
+                            </md-list-item>
+
+                        </md-list>
+
+
+                    </md-card-content>
+                </md-card>
+            </md-dialog-content>
+
+        </form>
+    </md-dialog>
+</script>
+
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDU0yX6BlIhIF8JLESH9qWu0_GZtAtBtwo&callback=initAddressAutoComplete&libraries=places">
+</script>
+
+</body>
+</html>
