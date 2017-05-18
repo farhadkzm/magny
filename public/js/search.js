@@ -14,7 +14,11 @@ mapApp.controller('MapController', [
 
         self.$onInit = function () {
             $scope.staticData = staticData;
-
+            $scope.location3 = {
+                "name": "Paseo de la Castellana, 121, Madrid, Spain",
+                "latitude": 40.4577751,
+                "longitude": -3.6906927999999652
+            };
             $scope.selectedSideTabIndex = 0;
             $scope.markers = [];
             $scope.searchPoint = {};
@@ -50,7 +54,7 @@ mapApp.controller('MapController', [
 
         $scope.searchServices = function () {
 
-            console.log($scope.place);
+            console.log($scope.location3);
         };
 
         $scope.toggleRightSideNav = function () {

@@ -1,0 +1,16 @@
+/*
+Optional adjustments for md-autocomplete in mobile screens
+*/
+
+/*#place-autocomplete > md-autocomplete md-input-container {*/
+    /*margin-top: -10px;*/
+/*}*/
+
+
+/*!*Media query for tablets and above *!*/
+
+/*@media screen and (min-width: 480px) {*/
+    /*#place-autocomplete > md-autocomplete md-input-container {*/
+        /*padding-bottom: 0;*/
+    /*}*/
+/*}*/
