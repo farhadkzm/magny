@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dynamo Demo</title>
+
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/3.7.8/firebase-app.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/3.7.8/firebase-auth.js"></script>
+    <script defer src="/__/firebase/3.7.8/firebase-database.js"></script>
+    <script defer src="/__/firebase/3.7.8/firebase-messaging.js"></script>
+    <script defer src="/__/firebase/3.7.8/firebase-storage.js"></script>
+    <!-- initialize the SDK after all desired features are loaded -->
+    <script defer src="/__/firebase/init.js"></script>
+
+    <script src="https://cdn.firebase.com/libs/geofire/4.1.2/geofire.min.js"></script>
+
+    <!-- Angular Material style sheet -->
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
+
+    <!-- Angular Material requires Angular.js Libraries -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-animate.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-aria.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-messages.min.js"></script>
+
+    <!-- Angular Material Library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js"></script>
+
+
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.7.16.min.js"></script>
+
+    <script type="text/javascript">
+        AWS.config.update({
+            region: "us-west-2",
+            // The endpoint should point to the local or remote computer where DynamoDB (downloadable) is running.
+            endpoint: 'http://localhost:8000',
+            /*
+             accessKeyId and secretAccessKey defaults can be used while using the downloadable version of DynamoDB.
+             For security reasons, do not store AWS Credentials in your files. Use Amazon Cognito instead.
+             */
+            accessKeyId: "fakeMyKeyId",
+            secretAccessKey: "fakeSecretAccessKey"
+        });
+
+        /*
+         Uncomment the following code to configure Amazon Cognito and make sure to
+         remove the endpoint, accessKeyId and secretAccessKey specified in the code above.
+         Make sure Cognito is available in the DynamoDB web service region (specified above).
+         Finally, modify the IdentityPoolId and the RoleArn with your own.
+         */
+        /*
+         AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+         IdentityPoolId: "us-west-2:12345678-1ab2-123a-1234-a12345ab12",
+         RoleArn: "arn:aws:iam::123456789012:role/dynamocognito"
+         });
+         */
+
+
+    </script>
+
+    <script src="/js/dynamo.js"></script>
+
+
+</head>
+<body ng-app="mapApp" ng-cloak ng-controller="DynController as ctrl" layout="column">
+
+
+<md-toolbar layout="row">
+
+    <md-button class="md-raised md-primary" ng-click="showAddDialog($event)">
+        <md-tooltip ng-if="$mdMedia('gt-sm')">
+            Show the control panel
+        </md-tooltip>
+        <md-icon md-svg-icon="/img/add.svg"></md-icon>
+        Control Panel
+    </md-button>
+
+</md-toolbar>
+
+<div flex layout="row">
+
+    <md-sidenav md-is-locked-open="$mdMedia('gt-sm')" md-component-id="searchSide">
+        <md-toolbar class="md-theme-light">
+            <div class="md-toolbar-tools">
+                <h2>Find services</h2>
+                <span flex></span>
+                <md-button hide-gt-sm class="md-icon-button" ng-click="closeSearchSide()">
+                    <md-icon md-svg-src="/img/close.svg"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-card>
+
+            <md-card-title>
+                <md-card-title-text>
+
+                    <span class="md-subhead">Database Operations</span>
+                </md-card-title-text>
+
+            </md-card-title>
+            <md-card-content>
+
+
+                <md-input-container class="md-block" flex-gt-sm="">
+
+                    <md-button class="md-raised md-primary" ng-click="createTable()">
+                        Initialise Database
+                    </md-button>
+                </md-input-container>
+
+                <md-input-container class="md-block" flex-gt-sm="">
+
+                    <md-button class="md-raised md-primary" ng-click="deleteTable()">
+                        Remove Stuff
+                    </md-button>
+                </md-input-container>
+
+                <md-input-container class="md-block" flex-gt-sm="">
+
+                    <md-button class="md-raised md-primary" ng-click="createMovies()">
+                        List
+                    </md-button>
+                </md-input-container>
+
+
+            </md-card-content>
+
+        </md-card>
+
+    </md-sidenav>
+
+    <div flex layout="row">
+
+        <md-content flex>
+            <md-button hide-gt-sm
+                       ng-click="showSearchTab()"
+                       class="md-fab md-primary" aria-label="Search"
+                       style="position: absolute;top: 5px">
+
+                <md-icon md-svg-src="/img/magnifier.svg"></md-icon>
+            </md-button>
+            <div class="md-padding">
+
+                <div layout="row">
+
+                    <md-content>
+                        <md-list flex>
+                            <md-subheader class="md-no-sticky">Movies in the database</md-subheader>
+                            <md-list-item class="md-3-line" ng-repeat="item in movies" ng-click="null">
+
+                                <div class="md-list-item-text" layout="column">
+                                    <h3>{{ item.year }}</h3>
+                                    <h4>{{ item.title }}</h4>
+                                    <p>{{ item.info.rating }}</p>
+                                </div>
+                            </md-list-item>
+                            <md-divider ></md-divider>
+
+                        </md-list>
+                    </md-content>
+                    <md-input-container class="md-block" style="margin-top: 100px">
+                        <label>Operation Logs</label>
+                        <textarea ng-model="operationLogs" rows="5"></textarea>
+                    </md-input-container>
+                </div>
+            </div>
+        </md-content>
+    </div>
+
+
+</div>
+
+</body>
+</html>
+
